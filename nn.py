@@ -25,7 +25,7 @@ def sigmoid_backward(dA,z):
   gz=s*(1-s)
   return dA*gz,z
 
-def L_initialize(layer_dims):
+def initialize_parameters_deep(layer_dims):
 
   parameters={}
   np.random.seed(3)
