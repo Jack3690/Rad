@@ -11,19 +11,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def relu(z): 
-  return np.max(0,z),z
+  return np.maximum(0,z),z
  
 def sigmoid(z): 
   return 1/(1+np.exp(-z)),z
 
 def relu_backward(dA,z):
-  gz=np.maximum(0,Z/Z)
-  return dA*gz,z
+  gz=np.maximum(0,z/z)
+  return dA*gz
 
 def sigmoid_backward(dA,z):
-  s=sigmoid(z)
+  s,_=sigmoid(z)
   gz=s*(1-s)
-  return dA*gz,z
+  
+  return dA*gz
 
 def initialize_parameters_deep(layer_dims):
 
@@ -37,9 +38,10 @@ def initialize_parameters_deep(layer_dims):
   
   return parameters
 
-def linear_forward(A_prev,W,b):
-  z=W@A_prev+b
-  cache=(A_prev,W,b)
+def linear_forward(A,W,b):
+  z = W@A+b
+
+  cache=(A,W,b)
 
   return z,cache
 
@@ -73,10 +75,19 @@ def L_model_forward(X,parameters):
 
   return AL,caches
 
-def compute_cost(AL, Y):
+def compute_cost(AL, Y, parameters):
 
     m = Y.shape[1]
-    cost = -np.sum(np.multiply(np.log(AL),Y)+np.multiply(np.log(1-AL),1-Y))/m
+    L=len(parameters)//2
+    L2_regularization_cost=0
+
+    for l in range(1,L+1):
+      W=parameters['W'+str(l)]
+      L2_regularization_cost+=np.sum(np.dot(W,W.T))
+
+    L2_regularization_cost*= (lambd/(2*m))
+
+    cost = -np.sum(np.multiply(np.log(AL),Y)+np.multiply(np.log(1-AL),1-Y))/m +  L2_regularization_cost
     cost = np.squeeze(cost)      
     return cost
 
@@ -85,7 +96,7 @@ def linear_backward(dZ, cache):
     A_prev, W, b = cache
     m = A_prev.shape[1]
 
-    dW = np.dot(dZ,A_prev.T)/m
+    dW = np.dot(dZ,A_prev.T)/m + (lambd*W)/m
     db = np.sum(dZ,axis=1,keepdims=True)/m
     dA_prev = np.dot(W.T,dZ)
 
@@ -116,7 +127,6 @@ def L_model_backward(AL, Y, caches):
 
     current_cache = caches[L-1]
     grads["dA" + str(L-1)], grads["dW" + str(L)], grads["db" + str(L)] = linear_activation_backward(dAL, current_cache, "sigmoid")
- 
     for l in reversed(range(L-1)):
 
         current_cache = caches[l]
@@ -136,16 +146,17 @@ def update_parameters(parameters, grads, learning_rate):
 
     return parameters
 
-def L_layer_model(X, Y, layers_dims, learning_rate = 0.0075, num_iterations = 3000, print_cost=False):#lr was 0.009
+def L_layer_model(X, Y, layers_dims, learning_rate = 0.0075, num_iterations = 3000, lambd =0, print_cost=False):#lr was 0.009
     np.random.seed(1)
+    assert(Y.shape[0]==1)
     costs = []
     parameters = initialize_parameters_deep(layers_dims)
-
+    lambd=lambd
     for i in range(0, num_iterations):
 
         AL, caches = L_model_forward(X, parameters)
   
-        cost = compute_cost(AL, Y)
+        cost = compute_cost(AL, Y,parameters)
   
         grads = L_model_backward(AL, Y, caches)
 
@@ -164,10 +175,10 @@ def L_layer_model(X, Y, layers_dims, learning_rate = 0.0075, num_iterations = 30
     
     return parameters
 
-def predict(X,parameters,Y):
+def predict(X,Y,parameters):
   AL,_=L_model_forward(X,parameters)
-  prediction=np.mean(np.abs(AL-Y))
-  return prediction
-
-
-
+  prediction=AL
+  prediction[np.where(AL>0.5)]=1
+  prediction[np.where(AL<=0.5)]=0
+  accuracy=100 - np.mean(np.abs(prediction-Y))*100
+  return accuracy
