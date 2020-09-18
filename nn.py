@@ -221,7 +221,7 @@ def update_parameters(parameters, grads, learning_rate):
     ### END CODE HERE ###
     return parameters
 
-def L_layer_model(X, Y, layers_dims, learning_rate = 0.0075, num_iterations = 3000, print_cost=False):#lr was 0.009
+def L_layer_model(X, Y, layers_dims, learning_rate = 0.0075, num_iterations = 3000, lambd=0,print_cost=False):#lr was 0.009
    
     np.random.seed(1)
     costs = []                         # keep track of cost
